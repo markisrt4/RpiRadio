@@ -1,0 +1,28 @@
+{ "radio_config": 
+{ "stations" : [
+        { "name": "FM radio",
+          "broadcast": "wfm_st", 
+          "freq_start": 88100000,
+          "freq_end": 108100000,
+          "freq_jump": 200000
+        },
+        { "name": "Weather band",
+          "broadcast": "fm", 
+          "freq_start": 162400000,
+          "freq_end": 162550000,
+          "freq_jump": 25000
+        },
+     	{ "name": "Michigan State Police",
+          "broadcast": "fm", 
+          "freq_start": 155370000,
+          "freq_end": 155865000,
+          "freq_jump": 495000
+        },
+     	{ "name": "A.R.E.S / Skywarn",
+          "broadcast": "fm", 
+          "freq_start": 146620000,
+          "freq_end": 146620000,
+          "freq_jump": 0
+        }
+] }
+}
