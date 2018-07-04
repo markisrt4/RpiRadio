@@ -1,2 +1,2 @@
 #!/bin/bash
-python /opt/bin/marksRadioController.py
+python /opt/bin/volume_controller.py

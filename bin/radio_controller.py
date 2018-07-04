@@ -8,8 +8,8 @@ import threading
 from time import sleep
 
 # GPIO Ports
-Enc_A = 16  				# Encoder input A: input GPIO 16
-Enc_B = 20  			        # Encoder input B: input GPIO 20
+Enc_B = 16  				# Encoder input B: input GPIO 16
+Enc_A = 20  			        # Encoder input A: input GPIO 20
 Psh_Btn = 12
 
 Rotary_counter = 0  			# Start counting from 0
@@ -32,7 +32,7 @@ s_freq   = s_start
 
 
 # Setup socket stuff for gqrx tcp
-GQRX_IP = '192.168.29.250'
+GQRX_IP = '192.168.29.115'
 GQRX_PORT = 7356
 BUFFER_SIZE = 1024
 
