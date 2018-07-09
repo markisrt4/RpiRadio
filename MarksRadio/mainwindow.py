@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Sat Jun 16 06:31:37 2018
+# Created: Fri Jul  6 01:31:47 2018
 #      by: PyQt5 UI code generator 5.3.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -29,7 +29,7 @@ class Ui_MainWindow(object):
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap("resources/Antena-Wireless.jpg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.radioBtn.setIcon(icon1)
-        self.radioBtn.setIconSize(QtCore.QSize(280, 320))
+        self.radioBtn.setIconSize(QtCore.QSize(280, 330))
         self.radioBtn.setObjectName("radioBtn")
         MainWindow.setCentralWidget(self.centralWidget)
 

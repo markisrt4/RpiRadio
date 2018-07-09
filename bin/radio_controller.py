@@ -1,11 +1,18 @@
 import curses
 import json
 import socket
+import sys
 
 import RPi.GPIO as GPIO
 import threading
 
 from time import sleep
+from threading import Thread
+
+import Adafruit_ADS1x15
+
+# Create an ADS1015 ADC (12-bit) instance.
+adc = Adafruit_ADS1x15.ADS1015()
 
 # GPIO Ports
 Enc_B = 16  				# Encoder input B: input GPIO 16
@@ -32,13 +39,17 @@ s_freq   = s_start
 
 
 # Setup socket stuff for gqrx tcp
-GQRX_IP = '192.168.29.115'
+#GQRX_IP = '192.168.29.115'
+GQRX_IP = sys.argv[1]
 GQRX_PORT = 7356
 BUFFER_SIZE = 1024
 
 # Establish TCP connection to GQRX
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((GQRX_IP, GQRX_PORT))
+
+# Read initial A/D channel 1 value for 10 turn pot
+last_pot_val = adc.read_adc(1, gain=1)
 
 def push_button(self):
 	global s_start, s_end, s_jump, s_bcast, s_freq, sidx, s, datastore
@@ -61,7 +72,29 @@ def push_button(self):
 	s.send(MESSAGE)
 	return
 
-# Rotarty encoder interrupt:
+def pot_read():
+	global s_freq, last_pot_val
+
+        # Read new position of pot, change freq if the pot has been moved past a small threshold.
+        pot_val = adc.read_adc(1, gain=1)
+        if (pot_val > last_pot_val + 2 or pot_val < last_pot_val -2):
+                delta_pot_val = pot_val - last_pot_val
+                # Check for jumpy, erroneous deltas
+                if (delta_pot_val > 100 or delta_pot_val < -100):
+                        return
+                if delta_pot_val > 0:
+                        delta_pot_val -= 2
+                elif delta_pot_val < 0:
+                        delta_pot_val += 2 
+                print delta_pot_val
+                # Change frequency by delta * 5Khz.
+                s_freq = s_freq + (5000 * delta_pot_val)
+                print str(s_freq) + '\r'
+                MESSAGE = "F " + str(s_freq)
+                s.send(MESSAGE)
+                last_pot_val = pot_val
+
+# Rotary encoder interrupt:
 # this one is called for both inputs from rotary switch (A and B)
 def rotary_interrupt(A_or_B):
 	global Rotary_counter, Current_A, Current_B, LockRotary
@@ -93,8 +126,10 @@ def main():
 	global s_start, s_end, s_jump, s_bcast, s_freq, sidx, s, datastore
 
 	NewCounter = 0                 # for faster reading with locks
+
+        loop_ctr = 0;
 	
-	# initialize interrupt handlers
+	# initialize interrupt handler
 	GPIO.setwarnings(True)
 	GPIO.setmode(GPIO.BCM)					# Use BCM mode
 										# define the Encoder switch inputs
@@ -129,7 +164,12 @@ def main():
 			MESSAGE = "F " + str(s_freq)
 			s.send(MESSAGE)
 
+                loop_ctr += 1
+                if loop_ctr % 10 == 0:
+                        pot_read()
+
+                if loop_ctr == 100:
+			loop_ctr = 0
 
 # start main demo function
 main()
-

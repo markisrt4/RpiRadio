@@ -26,12 +26,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    vncviewer.cpp
+    vncviewer.cpp \
+    bluetoothplayer.cpp
 
 HEADERS += \
         mainwindow.h \
-    vncviewer.h
+    vncviewer.h \
+    bluetoothplayer.h
 
 FORMS += \
         mainwindow.ui \
-    vncviewer.ui
+    vncviewer.ui \
+    bluetoothplayer.ui
+
+DISTFILES += \
+    BluetoothMetadata.py
