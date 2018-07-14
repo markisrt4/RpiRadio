@@ -25,10 +25,10 @@ class RadioApp(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def enableBluetooth(self):
         print "Bluetooth mode"
-        subprocess.call(["sudo", "systemctl", "stop", "radiostream"])
-        subprocess.call(["sudo", "systemctl", "stop", "radioctrl"])
-        subprocess.call(["sudo", "rfkill", "block",  "wifi"])
-        subprocess.call(["sudo", "rfkill", "unblock", "bluetooth"])
+        #subprocess.call(["sudo", "systemctl", "stop", "radiostream"])
+        #subprocess.call(["sudo", "systemctl", "stop", "radioctrl"])
+        #subprocess.call(["sudo", "rfkill", "block",  "wifi"])
+        #subprocess.call(["sudo", "rfkill", "unblock", "bluetooth"])
         self.hide()
         self.bluetoothmusic = BluetoothMusic(self)
         self.bluetoothmusic.show()
@@ -36,10 +36,10 @@ class RadioApp(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def enableRadio(self):
         print "Radio mode"
-        subprocess.call(["sudo", "rfkill", "unblock", "wifi"])
-        subprocess.call(["sudo", "rfkill", "block", "bluetooth"])
-        subprocess.call(["sudo", "systemctl", "start", "radiostream"])
-        subprocess.call(["sudo", "systemctl", "start", "radioctrl"])
+        #subprocess.call(["sudo", "rfkill", "unblock", "wifi"])
+        #subprocess.call(["sudo", "rfkill", "block", "bluetooth"])
+        #subprocess.call(["sudo", "systemctl", "start", "radiostream"])
+        #subprocess.call(["sudo", "systemctl", "start", "radioctrl"])
         subprocess.call(["/opt/script/startvnc.sh"])
 
 class BluetoothMusic(QtWidgets.QMainWindow, bluetoothplayer.Ui_bluetoothplayer):
@@ -59,6 +59,7 @@ class BluetoothMusic(QtWidgets.QMainWindow, bluetoothplayer.Ui_bluetoothplayer):
             self.btThread.updateTitleText.connect(self.updateTitleText)
             self.btThread.updateAlbumText.connect(self.updateAlbumText)
             self.btThread.updateTrackProgress.connect(self.updateTrackProgress)
+            self.btThread.updateTrackTime.connect(self.updateTrackTime)
 			
 
     def closeAndReturn(self):
@@ -78,11 +79,22 @@ class BluetoothMusic(QtWidgets.QMainWindow, bluetoothplayer.Ui_bluetoothplayer):
     def updateTrackProgress(self, percent):
         self.progressBar.setProperty("value", percent)
 
+    def updateTrackTime(self, timeNow, totalTime):
+        timeNowMins = timeNow / 60 
+        timeSecsNow = timeNow % 60
+        timeStr = '%02.0f' % (timeNowMins)+':'+ '%02.0f' % (timeSecsNow)
+        totalTimeMins = totalTime / 60
+        totalTimeSecs = totalTime % 60
+        totalStr = '%02.0f' % (totalTimeMins)+':'+ '%02.0f' % (totalTimeSecs)
+        self.trackElapsed.setText(timeStr)
+        self.trackTotal.setText(totalStr)
+
 class BluetoothThread(QThread):
 
         updateArtistText = pyqtSignal(str)        
         updateAlbumText  = pyqtSignal(str)        
         updateTitleText  = pyqtSignal(str)        
+        updateTrackTime  = pyqtSignal(int, int)
         updateTrackProgress = pyqtSignal(int)        
 
 	def __init__(self, BluetoothMetadata):
@@ -100,6 +112,7 @@ class BluetoothThread(QThread):
 		    title  = self.btmd.getTrackTitle()
 		    album  = self.btmd.getTrackAlbum()
 		    elapsedTime   = self.btmd.getTrackElapsedSeconds()
+		    totalTime   = self.btmd.getTrackTotalSeconds()
 		    percComplete = self.btmd.getTrackPercentageComplete() * 100
 		    #print "Artist = "+artist
 		    #print "Title = "+title
@@ -110,6 +123,7 @@ class BluetoothThread(QThread):
 		    self.updateTitleText.emit(title)
 		    self.updateArtistText.emit(artist)
                     self.updateTrackProgress.emit(percComplete)
+                    self.updateTrackTime.emit(elapsedTime, totalTime)
 		    sleep (1)
 
 

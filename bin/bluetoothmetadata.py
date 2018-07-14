@@ -69,6 +69,9 @@ class BluetoothMetadata():
 
 	def getTrackElapsedSeconds(self):
 		return int(self.metadata["Position"]) / 1000
+
+        def getTrackTotalSeconds(self):
+                return int(self.metadata["Duration"]) / 1000
 		
 	def getTrackPercentageComplete(self):
 		return (float(self.metadata["Position"]) / 1000 ) / (float(self.metadata["Duration"]) / 1000)
