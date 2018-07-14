@@ -18,7 +18,7 @@ from time import sleep
 class RadioApp(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self.showFullScreen()
+        #self.showFullScreen()
         self.setupUi(self)  # This is defined in design.py file automatically
         self.bluetoothBtn.clicked.connect(self.enableBluetooth)
         self.radioBtn.clicked.connect(self.enableRadio)
@@ -27,7 +27,7 @@ class RadioApp(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         print "Bluetooth mode"
         subprocess.call(["sudo", "systemctl", "stop", "radiostream"])
         subprocess.call(["sudo", "systemctl", "stop", "radioctrl"])
-        #subprocess.call(["sudo", "rfkill", "block",  "wifi"])
+        subprocess.call(["sudo", "rfkill", "block",  "wifi"])
         subprocess.call(["sudo", "rfkill", "unblock", "bluetooth"])
         self.hide()
         self.bluetoothmusic = BluetoothMusic(self)
@@ -45,56 +45,73 @@ class RadioApp(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 class BluetoothMusic(QtWidgets.QMainWindow, bluetoothplayer.Ui_bluetoothplayer):
     def __init__(self, parent):
         super(self.__class__, self).__init__(parent)
-        self.showFullScreen()
+        # self.showFullScreen()
         self.setupUi(self)
         self.backBtn.clicked.connect(self.closeAndReturn)
-		self.btmd = BluetoothMetadata()
-		self.btThread = BluetoothThread(btmd)
-	    self.btconnected = self.btmd.initialize()
-		if self.btconnected != True:
-			print "Error connecting!!"
-		else:
-			btThread.start()
+	self.btmd = BluetoothMetadata()
+	self.btThread = BluetoothThread(self.btmd)
+	self.btconnected = self.btmd.initialize()
+	if self.btconnected != True:
+	    print "Error connecting!!"
+	else:
+	    self.btThread.start()
+            self.btThread.updateArtistText.connect(self.updateArtistText)
+            self.btThread.updateTitleText.connect(self.updateTitleText)
+            self.btThread.updateAlbumText.connect(self.updateAlbumText)
+            self.btThread.updateTrackProgress.connect(self.updateTrackProgress)
 			
 
     def closeAndReturn(self):
-			# Figure out how to stop thread
-            self.close()
-            self.parent().show()
+	# Figure out how to stop thread
+        self.close()
+        self.parent().show()
 
     def updateAlbumText(self, text):
-            self.albumLabel.setText(text)
+        self.albumLabel.setText(text)
 
     def updateArtistText(self, text):
-            self.artistLabel.setText(text)
+        self.artistLabel.setText(text)
 
     def updateTitleText(self, text):
-            self.songLabel.setText(text)
+        self.songLabel.setText(text)
 
-class BluetoothThread(Qthread):
+    def updateTrackProgress(self, percent):
+        self.progressBar.setProperty("value", percent)
+
+class BluetoothThread(QThread):
+
+        updateArtistText = pyqtSignal(str)        
+        updateAlbumText  = pyqtSignal(str)        
+        updateTitleText  = pyqtSignal(str)        
+        updateTrackProgress = pyqtSignal(int)        
+
 	def __init__(self, BluetoothMetadata):
 		QThread.__init__(self)
 		self.btmd = BluetoothMetadata
+                self.isRunning = True
 
 	def __del__(self):
 		self.wait()
 
 	def run(self):
-		btmd.tick()
-	    artist   = btmd.getTrackArtist()
-		title      = btmd.getTrackTitle()
-		album = btmd.getTrackAlbum()
-		elapsedTime   = btmd.getTrackElapsedSeconds()
-		percComplete = btmd.getTrackPercentageComplete()
-		print "Artist = "+artist
-		print "Title = "+title
-		print "Album = "+album
-		print "Elapsed time = "+ str(elapsedTime)
-		print "Percentage complete = " + str(percComplete)
-		self.emit(SIGNAL('updateAlbumText(QString)'), album)
-		self.emit(SIGNAL('updateTitleText(QString)'), title)
-		self.emit(SIGNAL('updateArtistText(QString)'), artist)
-		sleep (.5)
+		while self.isRunning:
+		    self.btmd.tick()
+    	            artist = self.btmd.getTrackArtist()
+		    title  = self.btmd.getTrackTitle()
+		    album  = self.btmd.getTrackAlbum()
+		    elapsedTime   = self.btmd.getTrackElapsedSeconds()
+		    percComplete = self.btmd.getTrackPercentageComplete() * 100
+		    #print "Artist = "+artist
+		    #print "Title = "+title
+		    #print "Album = "+album
+		    #print "Elapsed time = "+ str(elapsedTime)
+		    #print "Percentage complete = " + str(percComplete)
+		    self.updateAlbumText.emit(album)
+		    self.updateTitleText.emit(title)
+		    self.updateArtistText.emit(artist)
+                    self.updateTrackProgress.emit(percComplete)
+		    sleep (1)
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # A new instance of QApplication
