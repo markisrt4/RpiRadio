@@ -50,20 +50,21 @@ class BluetoothMusic(QtWidgets.QMainWindow, bluetoothplayer.Ui_bluetoothplayer):
         self.backBtn.clicked.connect(self.closeAndReturn)
 	self.btmd = BluetoothMetadata()
 	self.btThread = BluetoothThread(self.btmd)
-	self.btconnected = self.btmd.initialize()
-	if self.btconnected != True:
-	    print "Error connecting!!"
-	else:
-	    self.btThread.start()
-            self.btThread.updateArtistText.connect(self.updateArtistText)
-            self.btThread.updateTitleText.connect(self.updateTitleText)
-            self.btThread.updateAlbumText.connect(self.updateAlbumText)
-            self.btThread.updateTrackProgress.connect(self.updateTrackProgress)
-            self.btThread.updateTrackTime.connect(self.updateTrackTime)
+	#self.btconnected = self.btmd.initialize()
+	#if self.btconnected != True:
+	#    print "Error connecting!!"
+	#else:
+	self.btThread.start()
+        self.btThread.updateArtistText.connect(self.updateArtistText)
+        self.btThread.updateTitleText.connect(self.updateTitleText)
+        self.btThread.updateAlbumText.connect(self.updateAlbumText)
+        self.btThread.updateTrackProgress.connect(self.updateTrackProgress)
+        self.btThread.updateTrackTime.connect(self.updateTrackTime)
 			
 
     def closeAndReturn(self):
-	# Figure out how to stop thread
+        self.isRunning = False
+        self.btThread.quit()
         self.close()
         self.parent().show()
 
@@ -95,19 +96,32 @@ class BluetoothThread(QThread):
         updateAlbumText  = pyqtSignal(str)        
         updateTitleText  = pyqtSignal(str)        
         updateTrackTime  = pyqtSignal(int, int)
-        updateTrackProgress = pyqtSignal(int)        
+        updateTrackProgress = pyqtSignal(float)        
 
 	def __init__(self, BluetoothMetadata):
 		QThread.__init__(self)
 		self.btmd = BluetoothMetadata
                 self.isRunning = True
+                self.currArtist = ""
+                self.currAlbum = ""
+                self.currTitle = ""
 
 	def __del__(self):
 		self.wait()
 
 	def run(self):
+                while not self.btmd.initialize():
+	            print "Error connecting!!"
+                    sleep (1)
+
+                self.running = True
+
 		while self.isRunning:
-		    self.btmd.tick()
+                    try:
+		        self.btmd.tick()
+                    except Exception as e:
+                        print(e)
+
     	            artist = self.btmd.getTrackArtist()
 		    title  = self.btmd.getTrackTitle()
 		    album  = self.btmd.getTrackAlbum()
@@ -119,12 +133,21 @@ class BluetoothThread(QThread):
 		    #print "Album = "+album
 		    #print "Elapsed time = "+ str(elapsedTime)
 		    #print "Percentage complete = " + str(percComplete)
-		    self.updateAlbumText.emit(album)
-		    self.updateTitleText.emit(title)
-		    self.updateArtistText.emit(artist)
+                    if artist != self.currArtist:
+                        self.updateArtistText.emit(artist)
+                        self.currArtist = artist
+
+                    if album != self.currAlbum:
+                        self.updateAlbumText.emit(album)
+                        self.currAlbum = album
+
+                    if title != self.currTitle:
+                        self.updateTitleText.emit(title)
+                        self.currTitle = title
+
                     self.updateTrackProgress.emit(percComplete)
                     self.updateTrackTime.emit(elapsedTime, totalTime)
-		    sleep (1)
+		    sleep (.5)
 
 
 def main():
